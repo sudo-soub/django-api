@@ -1,4 +1,3 @@
-# Create your views here.
 from django.http.response import JsonResponse
 from rest_framework.parsers import JSONParser
 from rest_framework import status
@@ -22,7 +21,9 @@ def tutorial_list(request):
         tutorial_data = JSONParser().parse(request)
         tutorial_serializer = TutorialSerializer(data=tutorial_data)
         if tutorial_serializer.is_valid():
-            tutorial_serializer.save()
+            tutorial = Tutorial(title=tutorial_data['title'],
+                                description=tutorial_data['description'])
+            tutorial.save()
             return JsonResponse(tutorial_serializer.data,
                                 status=status.HTTP_201_CREATED)
         return JsonResponse(tutorial_serializer.errors,
@@ -72,3 +73,40 @@ def tutorial_list_published(request):
     if request.method == 'GET':
         tutorials_serializer = TutorialSerializer(tutorials, many=True)
         return JsonResponse(tutorials_serializer.data, safe=False)
+
+
+# get tutorial details for specific user
+@api_view(['GET'])
+def tutorialforuser(request, userid):
+    if request.method == 'GET':
+        tutorial = Tutorial.objects.get(user=userid)
+        serializer = TutorialSerializer(tutorial)
+        print(serializer.data)
+        return JsonResponse({
+            "message": "Success",
+        }, status=status.HTTP_200_OK)
+
+    else:
+        return JsonResponse({
+            "message": "Method not allowed"
+        }, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+# get available books list
+@api_view(['GET'])
+def availabletutorials(request):
+    if request.method == 'GET':
+        tutorials = Tutorial.objects.filter(booked=False)
+        # result = []
+        serializer = TutorialSerializer(tutorials, many=True).data
+
+        # for tutorial in tutorials:
+        #     result.append(serializer['title'])
+        print(serializer)
+        return JsonResponse(
+            {"Tutorials": "result"},
+            status=status.HTTP_200_OK
+            )
+
+    else:
+        return JsonResponse(status=status.HTTP_405_METHOD_NOT_ALLOWED)
